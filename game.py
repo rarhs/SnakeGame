@@ -1,3 +1,4 @@
+## game.py
 import curses
 import random
 
@@ -90,48 +91,3 @@ class Game:
     def start(self):
         self.init_game()
         self.game_loop()
-
-class Food:
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-
-class InputManager:
-    def get_key(self) -> int:
-        return curses.getch()
-
-class ScoreManager:
-    def __init__(self):
-        self.score = 0
-
-    def get_score(self) -> int:
-        return self.score
-
-    def update_score(self, points: int):
-        self.score += points
-
-class GameManager:
-    def __init__(self):
-        self.game = Game()
-        self.input_manager = InputManager()
-        self.score_manager = ScoreManager()
-
-    def start_game(self):
-        self.game.start()
-
-    def restart_game(self):
-        self.game.restart()
-
-class Main:
-    def __init__(self):
-        self.game_manager = GameManager()
-
-    def start(self):
-        self.game_manager.start_game()
-
-    def restart(self):
-        self.game_manager.restart_game()
-
-if __name__ == "__main__":
-    main = Main()
-    main.start()
