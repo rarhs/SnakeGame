@@ -111,8 +111,8 @@ class ScoreManager:
         self.score += points
 
 class GameManager:
-    def __init__(self):
-        self.game = Game()
+    def __init__(self, game_width: int, game_height: int):
+        self.game = Game(game_width, game_height)
         self.input_manager = InputManager()
         self.score_manager = ScoreManager()
 
@@ -123,8 +123,9 @@ class GameManager:
         self.game.restart()
 
 class Main:
-    def __init__(self):
-        self.game_manager = GameManager()
+    def __init__(self, game_width: int, game_height: int):
+        curses.initscr()
+        self.game_manager = GameManager(game_width, game_height)
 
     def start(self):
         self.game_manager.start_game()
@@ -133,5 +134,8 @@ class Main:
         self.game_manager.restart_game()
 
 if __name__ == "__main__":
-    main = Main()
-    main.start()
+    try:
+        main = Main(800, 600)
+        main.start()
+    finally:
+        curses.endwin()
