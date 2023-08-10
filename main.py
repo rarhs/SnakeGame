@@ -1,149 +1,62 @@
+
 import curses
 import random
 
-class Game:
-    def __init__(self, width: int, height: int):
-        self.score = 0
-        self.width = width
-        self.height = height
-        self.snake_x = width // 2
-        self.snake_y = height // 2
-        self.food_x = random.randint(1, width - 2)
-        self.food_y = random.randint(1, height - 2)
-        self.direction_x = 0
-        self.direction_y = 0
-        self.snake_body = []
-        self.game_over = False
-        curses.noecho()
-        curses.cbreak()
-        self.game_window = curses.newwin(height, width, 0, 0)
-        self.game_window.timeout(100)
+def game(stdscr):
+    curses.curs_set(0)
+    height, width = 20, 80
+    snake_x, snake_y = width // 2, height // 2
+    food_x, food_y = random.randint(1, width - 2), random.randint(1, height - 2)
+    snake_body = [[snake_x, snake_y]]
+    direction_x, direction_y = 0, 0
+    score = 0
 
-    def init_game(self):
-        curses.initscr()
-        curses.curs_set(0)
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        self.game_window.keypad(1)
-        self.game_window.border(0)
-        self.game_window.nodelay(1)
+    # Create a new window
+    win = curses.newwin(height, width, 0, 0)
+    win.keypad(1)
+    win.timeout(100)
+    win.border(0)
 
-    def draw_border(self):
-        self.game_window.border(0)
+    # Game loop
+    while True:
+        key = win.getch()
 
-    def draw_snake(self):
-        self.game_window.addch(self.snake_y, self.snake_x, curses.ACS_CKBOARD)
+        if key == curses.KEY_UP:
+            direction_x, direction_y = 0, -1
+        elif key == curses.KEY_DOWN:
+            direction_x, direction_y = 0, 1
+        elif key == curses.KEY_LEFT:
+            direction_x, direction_y = -1, 0
+        elif key == curses.KEY_RIGHT:
+            direction_x, direction_y = 1, 0
 
-    def draw_food(self):
-        self.game_window.addch(self.food_y, self.food_x, curses.ACS_DIAMOND)
+        snake_x += direction_x
+        snake_y += direction_y
 
-    def update_snake(self):
-        self.snake_x += self.direction_x
-        self.snake_y += self.direction_y
-        with open('debug_log.txt', 'a') as log_file:
-            log_file.write(f'Snake Position: (x: {self.snake_x}, y: {self.snake_y})\n')
-        with open('debug_log.txt', 'a') as log_file:
-            log_file.write(f'Direction: (dx: {self.direction_x}, dy: {self.direction_y})\n')
-        self.snake_body.insert(0, [self.snake_x, self.snake_y])
-
-        if self.snake_x == self.food_x and self.snake_y == self.food_y:
-            self.score += 1
-            self.food_x = random.randint(1, self.width - 2)
-            self.food_y = random.randint(1, self.height - 2)
+        # Collision with food
+        if snake_x == food_x and snake_y == food_y:
+            food_x, food_y = random.randint(1, width - 2), random.randint(1, height - 2)
+            score += 1
         else:
-            self.snake_body.pop()
+            snake_body.pop()
 
-    def check_collision(self):
-        if (
-            self.snake_x == 0
-            or self.snake_x == self.width - 1
-            or self.snake_y == 0
-            or self.snake_y == self.height - 1
-            or [self.snake_x, self.snake_y] in self.snake_body[1:]
-        ):
-            with open('debug_log.txt', 'a') as log_file:
-                log_file.write('Game Over! Collision detected.\n')
-            self.game_over = True
+        # Insert new head segment
+        snake_body.insert(0, [snake_x, snake_y])
 
-    def update_score(self):
-        self.game_window.addstr(0, 2, f"Score: {self.score}")
+        # Draw the snake
+        win.clear()
+        win.border(0)
+        for segment in snake_body:
+            win.addch(segment[1], segment[0], curses.ACS_CKBOARD)
+        win.addch(food_y, food_x, curses.ACS_DIAMOND)
 
-    def game_loop(self):
-        while not self.game_over:
-            key = self.game_window.getch()
-            if key == curses.KEY_UP:
-                self.direction_x = 0
-                self.direction_y = -1
-            elif key == curses.KEY_DOWN:
-                self.direction_x = 0
-                self.direction_y = 1
-            elif key == curses.KEY_LEFT:
-                self.direction_x = -1
-                self.direction_y = 0
-            elif key == curses.KEY_RIGHT:
-                self.direction_x = 1
-                self.direction_y = 0
+        # Collision with wall or self
+        if (snake_x < 1 or snake_x >= width - 1 or
+            snake_y < 1 or snake_y >= height - 1 or
+            [snake_x, snake_y] in snake_body[1:]):
+            break
 
-            self.update_snake()
-            self.check_collision()
-
-            self.game_window.erase()
-            self.draw_border()
-            self.draw_snake()
-            self.draw_food()
-            self.update_score()
-
-            self.game_window.refresh()
-
-    def start(self):
-        self.init_game()
-        self.game_loop()
-
-class Food:
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-
-class InputManager:
-    def get_key(self) -> int:
-        return curses.getch()
-
-class ScoreManager:
-    def __init__(self):
-        self.score = 0
-
-    def get_score(self) -> int:
-        return self.score
-
-    def update_score(self, points: int):
-        self.score += points
-
-class GameManager:
-    def __init__(self, game_width: int, game_height: int):
-        self.game = Game(game_width, game_height)
-        self.input_manager = InputManager()
-        self.score_manager = ScoreManager()
-
-    def start_game(self):
-        self.game.start()
-
-    def restart_game(self):
-        self.game.restart()
-
-class Main:
-    def __init__(self, game_width: int, game_height: int):
-        curses.initscr()
-        self.game_manager = GameManager(game_width, game_height)
-
-    def start(self):
-        self.game_manager.start_game()
-
-    def restart(self):
-        self.game_manager.restart_game()
+        win.refresh()
 
 if __name__ == "__main__":
-    try:
-        main = Main(80, 20)
-        main.start()
-    finally:
-        curses.endwin()
+    curses.wrapper(game)
