@@ -14,6 +14,8 @@ class Game:
         self.direction_y = 0
         self.snake_body = []
         self.game_over = False
+        curses.noecho()
+        curses.cbreak()
         self.game_window = curses.newwin(height, width, 0, 0)
         self.game_window.timeout(100)
 
@@ -38,6 +40,10 @@ class Game:
     def update_snake(self):
         self.snake_x += self.direction_x
         self.snake_y += self.direction_y
+        with open('debug_log.txt', 'a') as log_file:
+            log_file.write(f'Snake Position: (x: {self.snake_x}, y: {self.snake_y})\n')
+        with open('debug_log.txt', 'a') as log_file:
+            log_file.write(f'Direction: (dx: {self.direction_x}, dy: {self.direction_y})\n')
         self.snake_body.insert(0, [self.snake_x, self.snake_y])
 
         if self.snake_x == self.food_x and self.snake_y == self.food_y:
@@ -55,6 +61,8 @@ class Game:
             or self.snake_y == self.height - 1
             or [self.snake_x, self.snake_y] in self.snake_body[1:]
         ):
+            with open('debug_log.txt', 'a') as log_file:
+                log_file.write('Game Over! Collision detected.\n')
             self.game_over = True
 
     def update_score(self):
@@ -135,7 +143,7 @@ class Main:
 
 if __name__ == "__main__":
     try:
-        main = Main(800, 600)
+        main = Main(80, 20)
         main.start()
     finally:
         curses.endwin()
